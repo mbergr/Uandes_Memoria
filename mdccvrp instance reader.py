@@ -38,7 +38,9 @@ A=[(i,j) for i in V for j in V if i!=j] #set A
 R=[i for i in range(1,vehicles+1)] #set R
 c={(i,j): np.hypot(xc[i-1]-xc[j-1],yc[i-1]-yc[j-1]) for i,j in A} #distance bettwen nodes
 
-M=max(c.values()) #big M for constrains (7)
+#M=max(c.values()) #big M for constrains (7) --> NOT BIG ENOUGH
+M=1000000 #big M for constrains (7)
+
 
 q= {i: q_l[i-1] for i in V} #demand
 
