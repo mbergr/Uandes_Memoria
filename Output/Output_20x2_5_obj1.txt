@@ -1,0 +1,6 @@
+Objetivo: Not Found
+Tiempo: 1131.8085823059082
+Vehiculos: 3
+Clientes: 20
+Depositos: 2
+None

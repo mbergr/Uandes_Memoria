@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+
 rnd = np.random
 
 #instance reading
@@ -92,3 +93,5 @@ for i in range(1,nodes+1):
 for i,j in active_arcs:
     plt.plot([xc[i-1],xc[j-1]],[yc[i-1],yc[j-1]],c='g')
 plt.show()
+
+
