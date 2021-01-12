@@ -1,6 +1,6 @@
 Objetivo: Not Found
-Tiempo: 0.013935089111328125
-Vehiculos: 1
+Tiempo: 0.08377838134765625
+Vehiculos: 2
 Clientes: 10
 Depositos: 2
 None

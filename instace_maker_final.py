@@ -9,9 +9,10 @@ from random import sample
 
 #PARAMETROS
 #cantidad de clientes requeridos
-ns=[10,10,15,15,20,20,25,25,30,30]
+ns=[10,15,20,25,30]
+depots=[2,4,6]
 #archivo
-short_files=['pr04','pr09','pr14','pr19','pr05','pr10','pr15','pr19','pr06','pr20']
+short_files=['pr09','pr10','pr18','pr19','pr20']
 
 
 
@@ -19,9 +20,9 @@ def comprehension(a, b):
      return [x for x in a if x not in b]
 
 
-def create_instances(short_file,n):
+def create_instances(short_file,n,dep):
     
-    infile = open('cordeau-al-2001-mdvrptw\\'+short_file+'.txt')
+    infile = open('cordeau-al-2001-mdvrptw2\\'+short_file+'.txt')
         
     #primera linea de lista original
     first_line=[]
@@ -38,8 +39,8 @@ def create_instances(short_file,n):
             vehicles=elements[1] #vehiculos
             clients=elements[2] #clientes
             m=elements[3] #depots
-            m2=2
-            first_line.extend([clients, m2])
+            depot_number=dep
+            first_line.extend([clients, depot_number])
             #print("vehicles={}, clientes={}, depots={}".format(vehicles, clientes, m))
         elif i<=m:
             elements=list(map(int,line.split()))
@@ -83,11 +84,10 @@ def create_instances(short_file,n):
         new_list=sample(L,n)
         
         new_list_depot=sample(L_depot,first_line[1])
-        #L=comprehension(L,new_list)
         
         primera_linea=' '.join(list(map(str,first_line)))
         #print(primera_linea)
-        txtout+=[primera_linea]
+        txtout+=[primera_linea+' '+str(k)]
         i=1
         for e in new_list:
             e[0]=i 
@@ -100,12 +100,13 @@ def create_instances(short_file,n):
             linea=' '.join(list(map(str,e)))
             txtout+=[linea]
             i+=1
-        with open('New_instances_final\\'+str(first_line[0])+'x'+str(first_line[1])+'_'+str(k)+'.txt', 'w') as f:
+        with open('New_instances_after\\'+str(first_line[0])+'x'+str(first_line[1])+'_'+str(k)+'.txt', 'w') as f:
             for item in txtout:
                 f.write("%s\n" % item) 
-          
+k=0          
 i=0
-for i in range(10):
-    short_file=short_files[i]
-    n=ns[i]
-    create_instances(short_file, n)
+for m in depots:    
+    for i in range(5):
+        short_file=short_files[i]
+        n=ns[i]
+        create_instances(short_file, n,m)

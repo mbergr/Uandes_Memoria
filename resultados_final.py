@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 """
+Created on Thu Jan  7 07:26:16 2021
+
+@author: mathi
+"""
+
+# -*- coding: utf-8 -*-
+"""
 Created on Fri Nov 13 19:21:16 2020
 
 @author: mathi
@@ -11,7 +18,8 @@ import numpy as np
 import pandas as pd
 import gurobipy as gp
 from gurobipy import Model, GRB, quicksum
-
+import matplotlib.pyplot as plt
+import itertools
 
 #variable global ft
 global ft
@@ -36,9 +44,10 @@ def read_param(infile):
         #print("i={}".format(i))
         if i==0:
             elements=list(map(int,line.split()))
-            clients=elements[0]
-            m=elements[1]
-            Q=elements[2]
+            clients=elements[0] #numero de clientes
+            m=elements[1] #numero de depot
+            Q=elements[2] #capacidad vehiculos
+            k=elements[3] #numero de replica
         else:
             elements=list(map(float,line.split()))
             V.append(int(elements[0]))
@@ -50,7 +59,7 @@ def read_param(infile):
             l_l.append(elements[6])
         i+=1    
         
-    vehicles=(clients//5)-1
+    vehicles=(clients//5)
     
     N=V[:clients]
     D=V[clients:]
@@ -65,10 +74,11 @@ def read_param(infile):
     e= {i: e_l[i-1] for i in V} #early time window
     l= {i: l_l[i-1] for i in V} #late time window
     M=sum(c.values())+sum(u.values())
-    return N, D, A, R, M, u, q, e, l, vehicles, m, clients, Q, V, c
+    return N, D, A, R, M, u, q, e, l, vehicles, m, clients, Q, V, c, xc, yc, k
     
 def optimize(parameter, obj):   
-    global ft   
+    global ft  
+    
     N=parameter[0]
     D=parameter[1]
     A=parameter[2]
@@ -83,11 +93,14 @@ def optimize(parameter, obj):
     clients=parameter[11]
     Q=parameter[12]
     V=parameter[13]
-    c=parameter[14]   
+    c=parameter[14]
+    xc=parameter[15]
+    yc=parameter[16]
+    k=parameter[17]
     n=clients
     
     #model in gurobipy  
-    mdl = Model("MD-CCVRPTW")
+    mdl = Model("MDCCVRPTW")
     
     x=mdl.addVars(V,V,R, vtype=GRB.BINARY) #X variable
     t=mdl.addVars(V,R, vtype=GRB.CONTINUOUS) #t variable
@@ -139,6 +152,36 @@ def optimize(parameter, obj):
                     if x[i,j,k].x>0.7:
                         s="x[{},{},{}]={}, t[{},{}]={}".format(i,j,k,x[i,j,k].x,i,k,t[i,k].x)
                         sol.append(s)
+        for i in V:    
+            plt.annotate("Node_{}".format(i),(xc[i-1],yc[i-1])).set_fontsize(3)
+
+        colors = itertools.cycle(["r", "b", "g", "c", "m", "y", "k"])
+        
+        #plot active arcs
+        #for i,j in active_arcs:    
+        #    plt.plot([xc[i-1],xc[j-1]],[yc[i-1],yc[j-1]],c=next(colors), linewidth=.85)
+        
+        for k in R:
+            prox_color=next(colors)
+            for i in V:
+                for j in V:
+                    if x[i,j,k].x>0.9:
+                        plt.plot([xc[i-1],xc[j-1]],[yc[i-1],yc[j-1]],c=prox_color, linewidth=.45, zorder=1)
+                        #plt.annotate("k={}".format(k),((xc[j-1]+xc[i-1])/2,(yc[j-1]+yc[i-1])/2)).set_fontsize(4)
+        
+        plt.scatter(xc[0:clients], yc[0:clients],c='b', s=10, zorder=2)
+        plt.scatter(xc[clients:], yc[clients:],c='r', s=10, zorder=2)
+        #plt.figure(figsize=(10, 10), dpi=80)
+        #plt.axis('auto')
+        #fig.suptitle('test title', fontsize=20)
+        plt.axis('off')
+        #plt.savefig("test.png")
+        plt.rcParams.update({'font.size': 4})
+        name=str(n)+'x'+str(m)+'_'+str(k)+'.png'
+        plt.savefig('Images\\'+name, dpi=400, bbox_inches=0)
+        
+        #plt.show()
+        #print(D)
         
         return obj.getValue(), mdl.Runtime, vehicles, clients, m, mdl.MIPGap, first_sol, sol 
     
@@ -152,7 +195,7 @@ def optimize(parameter, obj):
 
 
 txtfiles = []
-folder='New_instances_final_2depot2\\'
+folder='New_instances_after\\'
 #folder='small_inst\\'
 #folder='cordeau-menosde100\\'
 for instance in glob.glob(folder+'*.txt'):
@@ -175,6 +218,8 @@ for file in txtfiles:
     infile = open(file)
     print(file)
     parameters=read_param(infile) 
+    
+
     for obj in range(1,5):    
         L=optimize(parameters, obj)
         
@@ -203,38 +248,3 @@ for file in txtfiles:
         txtout=[]
     infile.close()
 
-"""
-for file in txtfiles:
-    if file[-10:]=="readme.txt":
-        continue
-    infile = open(file)
-    print(file)
-    parameters=read_param(infile) 
-    obj=2
-    L=optimize(parameters, obj)
-    
-    short_file=file.replace(folder,'')
-    short_file=short_file.replace('.txt','')
-    instances.append(short_file)   
-    objectives.append(L[0])
-    times.append(L[1])
-    vehicles.append(L[2])
-    clients.append(L[3])
-    depots.append(L[4])
-    gap.append(L[5])
-    fs.append(L[6])
-    FO.append(obj)
-    d={'FO':FO, 'Instance':instances, 'Clientes':clients, 'Depositos':depots, 
-       'Vehiculos':vehicles, 'Objective': objectives,'Gap':gap, 'First Sol':fs,'Time': times}
-    df = pd.DataFrame(data=d)
-    df.to_excel("Output.xlsx", index=False)
-    txtout=txtout+["Objetivo: "+str(L[0]),"Tiempo: "+str(L[1]),"Vehiculos: "+str(L[2]),
-                   "Clientes: "+str(L[3]),"Depositos: "+str(L[4])]
-    txtout=txtout+L[7]
-    with open('Output\Output_'+short_file+'_obj'+str(obj)+'.txt', 'w') as f:
-        for item in txtout:
-            f.write("%s\n" % item) 
-    f.close()
-    txtout=[]
-    infile.close()
-"""
